@@ -29,4 +29,11 @@ public class CategoryService {
         Category category = catOpt.orElseThrow(() -> new EntityNotFoundException("Categoria não encontrada!"));
         return new CategoryDto(catOpt.get());
     }
+
+    public CategoryDto insert(CategoryDto catDto) {
+        Category category = new Category();
+        category.setName(catDto.getName());
+        category = categoryRepository.save(category);
+        return new CategoryDto(category);
+    }
 }
