@@ -1,7 +1,9 @@
 package com.devsuperior.dscatalog.services;
 
 import com.devsuperior.dscatalog.dto.ProductDto;
+import com.devsuperior.dscatalog.entities.Category;
 import com.devsuperior.dscatalog.entities.Product;
+import com.devsuperior.dscatalog.repositories.CategoryRepository;
 import com.devsuperior.dscatalog.repositories.ProductRepository;
 import com.devsuperior.dscatalog.services.exceptions.DatabaseIntegrityException;
 import com.devsuperior.dscatalog.services.exceptions.ResourceNotFoundException;
@@ -22,6 +24,9 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private CategoryRepository categoryRepository;
+
     @Transactional(readOnly = true)
     public Page<ProductDto> findAllPaged(PageRequest pageRequest) {
         Page<Product> products = productRepository.findAll(pageRequest);
@@ -38,16 +43,29 @@ public class ProductService {
     @Transactional
     public ProductDto insert(ProductDto productDto) {
         Product product = new Product();
-        product.setName(productDto.getName());
+        copyDtoToEntity(productDto, product);
         product = productRepository.save(product);
         return new ProductDto(product);
+    }
+
+    private void copyDtoToEntity(ProductDto productDto, Product product) {
+        product.setName(productDto.getName());
+        product.setDescription(productDto.getDescription());
+        product.setDate(productDto.getDate());
+        product.setImgUrl(productDto.getImgUrl());
+        product.setPrice(productDto.getPrice());
+
+        product.getCategories().clear();
+        productDto.getCategories().forEach( categoryDto -> {
+            Category category = categoryRepository.getReferenceById(categoryDto.getId());
+        });
     }
 
     @Transactional
     public ProductDto update(Long id, ProductDto productDto) {
         try {
             Product product = productRepository.getReferenceById(id);
-            product.setName(productDto.getName());
+            copyDtoToEntity(productDto, product);
             product = productRepository.save(product);
             return new ProductDto(product);
         } catch (EntityNotFoundException e) {
